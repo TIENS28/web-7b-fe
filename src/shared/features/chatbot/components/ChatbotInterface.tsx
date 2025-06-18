@@ -135,7 +135,7 @@ export const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({
         onChange={onInputChange}
         onKeyPress={onKeyPress}
         onSend={handleSend}
-        disabled={false}
+        disabled={isTyping}
       />
     </div>
   );

@@ -41,7 +41,7 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({
   });
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && inputMessage.trim() && !isTyping) {
       e.preventDefault();
       sendMessage(inputMessage);
     }

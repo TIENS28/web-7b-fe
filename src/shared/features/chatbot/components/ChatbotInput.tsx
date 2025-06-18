@@ -23,17 +23,33 @@ export const ChatbotInput: React.FC<ChatbotInputProps> = ({
 
   const handleSend = () => {
     console.log('Send button clicked, value:', value);
-    onSend();
+    console.log('Value length:', value.length);
+    console.log('Value trimmed:', value.trim());
+    console.log('Value trimmed length:', value.trim().length);
+    
+    if (value.trim()) {
+      console.log('Calling onSend...');
+      onSend();
+    } else {
+      console.log('Value is empty, not sending');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     console.log('Key pressed:', e.key);
-    onKeyPress(e);
+    if (e.key === 'Enter' && value.trim()) {
+      e.preventDefault();
+      onSend();
+    } else {
+      onKeyPress(e);
+    }
   };
+
+  // Debug: Log current state
+  console.log('ChatbotInput render:', { value, disabled, hasValue: !!value.trim() });
 
   return (
     <div className="chat-input">
-      {/* Test input để debug */}
       <input
         type="text"
         value={value}
@@ -41,7 +57,7 @@ export const ChatbotInput: React.FC<ChatbotInputProps> = ({
         onKeyPress={handleKeyPress}
         placeholder="Nhập tin nhắn..."
         className="message-input"
-        disabled={false}
+        disabled={disabled}
         style={{
           position: 'relative',
           zIndex: 1002,
@@ -51,12 +67,14 @@ export const ChatbotInput: React.FC<ChatbotInputProps> = ({
       <button 
         onClick={handleSend}
         className="send-button"
-        disabled={!value.trim()}
+        disabled={disabled || !value.trim()}
         aria-label="Gửi tin nhắn"
         style={{
           position: 'relative',
           zIndex: 1002,
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          opacity: (disabled || !value.trim()) ? 0.6 : 1,
+          cursor: (disabled || !value.trim()) ? 'not-allowed' : 'pointer'
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

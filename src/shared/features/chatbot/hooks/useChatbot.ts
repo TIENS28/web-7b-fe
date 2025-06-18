@@ -89,10 +89,15 @@ export const useChatbot = (config: ChatbotConfig = {}) => {
 
   const setInputMessage = (message: string) => {
     console.log('setInputMessage called with:', message);
-    setState(prev => ({
-      ...prev,
-      inputMessage: message
-    }));
+    setState(prev => {
+      console.log('Previous state:', prev.inputMessage);
+      const newState = {
+        ...prev,
+        inputMessage: message
+      };
+      console.log('New state:', newState.inputMessage);
+      return newState;
+    });
   };
 
   const clearMessages = () => {
