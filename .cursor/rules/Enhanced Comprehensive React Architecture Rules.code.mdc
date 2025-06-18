@@ -1,0 +1,576 @@
+---
+description: "Enhanced Comprehensive React Architecture Rules (2024)"
+globs: 
+alwaysApply: true
+---
+
+# 🏗️ COMPREHENSIVE REACT ARCHITECTURE (2024)
+
+## 📁 MANDATORY FOLDER STRUCTURE
+
+### Root Structure:
+```
+src/
+├── app/                         # Global application setup
+│   ├── App.tsx                  # Root component
+│   ├── providers/               # Global providers
+│   │   ├── QueryProvider.tsx    # React Query setup
+│   │   ├── ThemeProvider.tsx    # Theme configuration
+│   │   └── AuthProvider.tsx     # Authentication
+│   │   └── I18nProvider.tsx    # I18nProvider
+│   ├── stores/                  # Global Zustand stores
+│   │   ├── authStore.ts         # Authentication state
+│   │   └── uiStore.ts           # Global UI state
+│   └── router/                  # Global routing
+│       ├── AppRouter.tsx        # Main router with lazy loading
+│       └── ProtectedRoute.tsx   # Route guards
+├── locales/                     # i18n translations
+│   ├── en/
+│   │   └── translation.json
+│   ├── vi/
+│   │   └── translation.json
+│   └── i18n.ts                  # i18next configuration
+├── shared/                      # Shared/reusable logic
+│   ├── components/              # Reusable UI components
+│   │   ├── ui/                  # Common components & custom base elements
+│   │   ├── shadcn/                  # Atomic shadcn components
+│   │   ├── forms/               # Form components
+│   │   └── layout/              # Layout components
+│   ├── hooks/                   # Global custom hooks
+│   ├── utils/                   # Utility functions
+│   ├── types/                   # Global TypeScript types
+│   ├── lib/                     # Third-party configurations
+│   │   ├── apiInstance.ts               # Axios instance
+│   │   ├── react-query.ts       # React Query config
+│   │   └── zod-schemas.ts       # Shared validation schemas
+│   ├── config/                  # App configuration
+│   ├── constants/               # Application constants
+│   └── assets/                  # Static assets
+│   ├── SharedRoutes.tsx     # shared routes aggregator
+├── public/                      # Public-facing features
+│   ├── PublicRoutes.tsx     # Public routes aggregator
+│   ├── features/                # Feature modules
+│   │   ├── home/                # Example feature
+│   │   │   ├── index.ts         # ✅ MANDATORY export hub
+│   │   │   ├── router.tsx       # ✅ MANDATORY feature routes
+│   │   │   ├── pages/           # Page components
+│   │   │   ├── components/      # Feature components
+│   │   │   │   ├── FeatureCard.tsx
+│   │   │   │   └── __tests__/
+│   │   │   │       └── FeatureCard.test.tsx  # ✅ Test files
+│   │   │   ├── hooks/           # React Query wrappers
+│   │   │   ├── services/        # API calls
+│   │   │   ├── types/           # TypeScript interfaces
+│   │   │   └── utils/           # Feature utilities
+│   │   └── [other-features]/
+│   ├── layouts/                 # Public layouts
+│   └── assets/                  # Public-specific assets (NOT manual CSS)
+├── admin/                       # Admin-only features
+│   └── assets/                  # Admin-specific assets (NOT manual CSS)
+│   ├── features/                # Admin feature modules
+│   │   ├── user/                # Example feature
+│   │   │   ├── index.ts         # ✅ MANDATORY export hub
+│   │   │   ├── router.tsx       # ✅ MANDATORY feature routes
+│   │   │   ├── pages/           # Page components
+│   │   │   ├── components/      # Feature components
+│   │   │   │   ├── FeatureCard.tsx
+│   │   │   │   └── __tests__/
+│   │   │   │       └── FeatureCard.test.tsx  # ✅ Test files
+│   │   │   ├── hooks/           # React Query wrappers
+│   │   │   ├── services/        # API calls
+│   │   │   ├── types/           # TypeScript interfaces
+│   │   │   └── utils/           # Feature utilities
+│   │   └── [other-features]/
+│   ├── layouts/                 # Admin layouts
+│   └── theme/                   # Admin theming
+│   ├── AdminRoutes.tsx      # Admin routes aggregator
+└── .env                         # NEW: Environment types
+```
+## 🔑 MANDATORY EXPORT PATTERNS
+
+### Feature Export Hub (index.ts):
+```typescript
+// ✅ REQUIRED: Every feature MUST export via index.ts
+export { FeatureListPage, FeatureDetailPage, FeatureCreatePage } from './pages';
+export { FeatureTable, FeatureForm, FeatureCard } from './components';
+export { useFeatures, useFeature, useCreateFeature, useUpdateFeature } from './hooks';
+export { featureApi } from './services';
+export type { Feature, FeatureFormData, FeatureFilters } from './types';
+export { default as FeatureRouter } from './router';
+```
+
+### Feature Router Pattern (router.tsx):
+```tsx
+// ✅ REQUIRED: Every feature MUST have dedicated router
+import { Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from 'shared/components';
+import { ProtectedRoute } from 'app/router/ProtectedRoute.tsx';
+import { FeatureListPage, FeatureDetailPage, FeatureCreatePage } from './pages';
+
+export default function FeatureRouter() {
+  return (
+    <ErrorBoundary fallback={ErrorFallback}>
+      <Routes>
+        <Route path="/" element={<FeatureListPage />} />
+        <Route 
+          path="/create" 
+          element={
+            <ProtectedRoute requirePermission="feature:create">
+              <FeatureCreatePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="/:id" element={<FeatureDetailPage />} />
+        <Route 
+          path="/:id/edit" 
+          element={
+            <ProtectedRoute requirePermission="feature:update">
+              <FeatureEditPage />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </ErrorBoundary>
+  );
+}
+```
+## 🔧 API CLIENT CONFIGURATION
+
+### Required API Setup (src/shared/lib/axiosInstance.ts):
+```typescript
+// ✅ MANDATORY: Centralized API client
+import axios, { type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from 'app/stores/authStore';
+
+const api = axios.create({
+baseURL: import.meta.env.VITE_API_BASE_URL,
+headers: {
+  'Content-Type': 'application/json',
+},
+});
+
+// ✅ REQUIRED: Auth token interceptor
+api.interceptors.request.use(
+(config: InternalAxiosRequestConfig) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+},
+(error) => Promise.reject(error)
+);
+```
+```tsx
+// ✅ REQUIRED: ALL pages MUST be wrapped in ErrorBoundary
+import { ErrorBoundary } from 'shared/components';
+
+export default function FeaturePage() {
+  const { data, isLoading, error } = useFeatures();
+  
+  // ✅ Let ErrorBoundary catch errors
+  if (isLoading) return <LoadingSpinner />;
+  if (error) throw error;
+
+  return (
+    <ErrorBoundary fallback={ErrorFallback}>
+      <div className="container mx-auto py-6">
+        <h1 className="text-2xl font-bold mb-6">Feature Title</h1>
+        {/* Page content */}
+      </div>
+    </ErrorBoundary>
+  );
+}
+```
+### API Hooks:
+```typescript
+// ✅ REQUIRED: Standardized React Query patterns
+export const useFeatures = (params?: FeatureParams) => {
+  return useQuery({
+    queryKey: ['features', params],
+    queryFn: () => featureApi.getAll(params),
+    throwOnError: true, // Let ErrorBoundary catch
+    retry: (failureCount, error) => {
+      // Don't retry on 4xx errors
+      if (error.response?.status >= 400 && error.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    meta: { errorMessage: 'Không thể tải dữ liệu' }
+  });
+};
+
+export const useCreateFeature = () => {
+  return useMutation({
+    mutationFn: featureApi.create,
+    onError: (error) => {
+      toast.error(error.message || 'Có lỗi xảy ra');
+    },
+    throwOnError: false // Handle locally in forms
+  });
+};
+```
+## 🚨 ERROR HANDLING STRATEGY (Mục Mới - Làm Rõ)
+
+*   **Nguyên tắc:** Xử lý lỗi một cách nhất quán và cung cấp phản hồi rõ ràng cho người dùng và developer.
+*   **Error Boundaries:**
+    *   ✅ **BẮT BUỘC:** Bọc tất cả các **trang (page components)** và **feature routers** bằng component `ErrorBoundary` (từ `shared/components/ErrorBoundary`).
+    *   ✅ Cung cấp `fallback` UI hợp lý cho `ErrorBoundary` để tránh màn hình trắng.
+*   **API Query Errors (`useQuery`, `useInfiniteQuery`):**
+    *   ✅ **BẮT BUỘC:** Sử dụng `throwOnError: true` trong options của `useQuery`. Lỗi sẽ được lan truyền lên và bắt bởi `ErrorBoundary` gần nhất.
+    *   ✅ `ErrorBoundary` sẽ hiển thị fallback UI (ví dụ: trang lỗi chung, thông báo lỗi tại chỗ).
+    *   ✅ Cấu hình `retry` logic trong `QueryClient` hoặc từng query để tự động thử lại các lỗi mạng hoặc server tạm thời (5xx). Không nên retry lỗi client (4xx).
+    *   ✅ Có thể cung cấp `meta: { errorMessage: '...' }` trong `useQuery` để `QueryClient` hoặc `ErrorBoundary` có thể hiển thị thông báo thân thiện hơn.
+*   **API Mutation Errors (`useMutation`):**
+    *   ✅ **KHUYẾN KHÍCH:** Sử dụng `throwOnError: false` (mặc định).
+    *   ✅ Xử lý lỗi trực tiếp trong callback `onError` của `useMutation` hoặc trong logic gọi `mutate`/`mutateAsync`.
+    *   ✅ Hiển thị thông báo lỗi cụ thể cho người dùng (ví dụ: sử dụng `react-hot-toast` hoặc hiển thị lỗi trực tiếp trên form).
+    *   ✅ Ví dụ: Cập nhật state lỗi của form, hiển thị toast thông báo "Lưu thất bại: [lý do]".
+*   **Form Validation Errors:**
+    *   ✅ **BẮT BUỘC:** Sử dụng `zod` và `zodResolver` (với `react-hook-form`) để validate dữ liệu form phía client.
+    *   ✅ Hiển thị lỗi validation trực tiếp dưới các trường input tương ứng.
+    *   ✅ Xử lý lỗi submit chung (ví dụ: lỗi mạng khi submit, lỗi từ API sau khi validate thành công phía client) như trong ví dụ `FeatureForm` của bạn (sử dụng `try...catch` và state `submitError`).
+*   **Unexpected Client-Side Errors:**
+    *   Các lỗi JavaScript không mong muốn khác trong quá trình render hoặc xử lý logic UI sẽ được bắt bởi `ErrorBoundary`.
+*   **Logging:**
+    *   ✅ **KHUYẾN KHÍCH:** Tích hợp dịch vụ logging (như Sentry) để ghi lại tất cả các lỗi được bắt bởi `ErrorBoundary` và các lỗi không mong muốn khác trong môi trường production.
+
+```tsx
+// ✅ Page Component với ErrorBoundary 
+import { ErrorBoundary } from 'shared/components';
+import { ErrorFallback } from 'shared/components/ErrorFallback'; // Component hiển thị lỗi
+
+export default function FeaturePage() {
+  const { data, isLoading, error } = useFeatures(); // throwOnError: true
+
+  // React Query sẽ throw lỗi nếu có, ErrorBoundary sẽ bắt
+  if (isLoading) return <LoadingSpinner />;
+  // Không cần check error ở đây nếu dùng throwOnError: true
+
+  return (
+    <ErrorBoundary fallback={<ErrorFallback />}>
+      {/* ... content ... */}
+    </ErrorBoundary>
+  );
+}
+
+// ✅ Mutation Handling 
+export const useCreateFeature = () => {
+  const queryClient = useQueryClient(); // Để invalidate cache
+  return useMutation({
+    mutationFn: featureApi.create,
+    onSuccess: () => {
+      toast.success('Tạo thành công!');
+      queryClient.invalidateQueries({ queryKey: ['features'] });
+    },
+    onError: (error: ApiError) => { // Giả sử ApiError là type lỗi của bạn
+      // Xử lý lỗi cụ thể ở đây, không throw lên ErrorBoundary
+      toast.error(error.message || 'Có lỗi xảy ra khi tạo.');
+    },
+    // throwOnError: false (mặc định)
+  });
+};
+```
+
+## 📦 IMPORT & ALIAS RULES
+
+### Import Order:
+```typescript
+// ✅ REQUIRED ORDER:
+import React from 'react';                    // 1. React
+import { useQuery } from '@tanstack/react-query'; // 2. External libraries
+import { Button } from 'shared/components';   // 3. Shared (alias)
+import { useFeatures } from './hooks';        // 4. Relative (same feature)
+```
+
+### Alias Configuration:
+- ✅ `shared/` → `src/shared/`
+- ✅ `public/` → `src/public/`
+- ✅ `admin/` → `src/admin/`
+- 🚫 NO relative imports `../../../`
+
+## 🔄 STATE MANAGEMENT
+
+*   **Nguyên tắc cốt lõi:** Phân tách rõ ràng giữa **Server State** và **Client/UI State**.
+*   **Server State (API Cache):**
+    *   ✅ **BẮT BUỘC:** Sử dụng **TanStack Query (React Query)** để quản lý trạng thái dữ liệu từ API (fetching, caching, synchronization, updating).
+    *   ✅ Cấu hình instance QueryClient tập trung tại `src/shared/lib/react-query.ts`.
+    *   ✅ Sử dụng các hook như `useQuery`, `useInfiniteQuery`, `useMutation` trong thư mục `hooks/` của từng feature.
+    *   ✅ Luôn cung cấp `queryKey` hợp lý và tận dụng caching.
+    *   ✅ Sử dụng `throwOnError: true` trong `useQuery` để lỗi được bắt bởi `ErrorBoundary` gần nhất (thường là ở cấp độ trang hoặc router).
+    *   ✅ Xử lý lỗi mutation (`useMutation`) cục bộ (ví dụ: hiển thị toast, cập nhật state form) thay vì `throwOnError`, trừ khi cần thiết.
+*   **Client/UI State:**
+    *   ✅ **BẮT BUỘC:** Sử dụng **Zustand** cho trạng thái UI toàn cục (global UI state) hoặc trạng thái phức tạp cần chia sẻ giữa các component không liên quan trực tiếp.
+    *   ✅ Đặt global stores trong `src/app/stores/`.
+    *   ✅ Feature-specific UI stores (nếu thực sự cần thiết và không thể quản lý bằng state component hoặc URL) có thể đặt trong `[feature]/stores/`.
+    *   ✅ Sử dụng middleware (như `persist` cho `localStorage`) khi cần thiết.
+    *   ✅ Chỉ lưu trữ trạng thái UI tối thiểu cần thiết trong Zustand (ví dụ: trạng thái modal, bộ lọc UI tạm thời, lựa chọn của người dùng). **KHÔNG** lưu trữ dữ liệu server trong Zustand.
+    *   ✅ Sử dụng state của component React (`useState`, `useReducer`) cho trạng thái cục bộ, không cần chia sẻ.
+    *   ✅ Sử dụng URL Search Params (quản lý qua React Router) cho trạng thái cần bookmark, chia sẻ qua URL (ví dụ: trang hiện tại của pagination, bộ lọc chính).
+
+```typescript
+// ✅ Server state: React Query
+export const useFeatures = (params?: FeatureParams) => {
+  return useQuery({
+    queryKey: ['features', params],
+    queryFn: () => featureApi.getAll(params),
+    throwOnError: true, // Để ErrorBoundary xử lý
+  });
+};
+
+// ✅ Global UI state: Zustand
+// src/app/stores/authStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+// ... (Giữ nguyên implementation của useAuthStore)
+
+// ✅ Feature-specific UI state (Ví dụ): Zustand
+// src/public/features/some-feature/stores/uiStore.ts
+interface FeatureUIState {
+  isFilterPanelOpen: boolean;
+  toggleFilterPanel: () => void;
+}
+export const useFeatureUIStore = create<FeatureUIState>((set) => ({
+  isFilterPanelOpen: false,
+  toggleFilterPanel: () => set((state) => ({ isFilterPanelOpen: !state.isFilterPanelOpen })),
+}));
+```
+## 🚀 PERFORMANCE OPTIMIZATION
+
+### Mandatory Lazy Loading Pattern:
+```tsx
+// ✅ REQUIRED: All feature routes MUST be lazy loaded
+import React, { Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LoadingSpinner } from 'shared/components/ui';
+import { ErrorBoundary } from 'shared/components';
+
+// ✅ Lazy load feature routes
+const PublicRoutes = React.lazy(() => import('./PublicRoutes'));
+const AdminRoutes = React.lazy(() => import('./AdminRoutes'));
+const LoginPage = React.lazy(() => import('public/features/auth/pages/LoginPage'));
+
+export function AppRouter() {
+return (
+  <BrowserRouter>
+    <ErrorBoundary fallback={ErrorFallback}>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/*" element={<PublicRoutes />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
+  </BrowserRouter>
+);
+}
+```
+
+## 🧪 TESTING REQUIREMENTS
+
+### Testing Structure:
+- ✅ Test files MUST be colocated with source files
+- ✅ Use Vitest + React Testing Library
+- ✅ File naming: `*.test.tsx` or `*.spec.tsx`
+
+### Testing Rules:
+```typescript
+// ✅ MANDATORY: Component test example
+// src/shared/components/Button.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+it('should handle click events', () => {
+  const handleClick = vi.fn();
+  render(<Button onClick={handleClick}>Click me</Button>);
+  
+  fireEvent.click(screen.getByText('Click me'));
+  expect(handleClick).toHaveBeenCalledTimes(1);
+});
+});
+```
+
+### Coverage Requirements:
+- ✅ `shared/components/`: Minimum 80% coverage
+- ✅ Custom hooks: 100% coverage for business logic
+- ✅ Critical pages (booking, payment): Integration tests required
+- 🚫 NO mocking child components - test user behavior
+
+## 🌍 ENVIRONMENT VARIABLES
+
+### Environment Configuration:
+```typescript
+// ✅ REQUIRED: src/env.d.ts
+interface ImportMetaEnv {
+readonly VITE_API_BASE_URL: string;
+readonly VITE_APP_NAME: string;
+readonly VITE_APP_VERSION: string;
+readonly VITE_FIREBASE_API_KEY?: string;
+readonly VITE_SENTRY_DSN?: string;
+}
+
+interface ImportMeta {
+readonly env: ImportMetaEnv;
+}
+```
+
+### Environment Rules:
+- ✅ Client-side variables MUST start with `VITE_`
+- ✅ All env vars MUST be typed in `env.d.ts`
+- 🚫 NO hardcoded URLs, keys, or secrets
+- ✅ Use `import.meta.env.VITE_*` for access
+
+
+## 🎨 STYLING & CODE FORMATTING
+*   **Dark Mode:**
+    *   ✅ **BẮT BUỘC:** Tất cả các component UI mới hoặc được chỉnh sửa trong `shared/components/` (bao gồm `ui/`, `forms/`, `layout/`, `data-table/`) **PHẢI** hỗ trợ **Dark Mode**.
+    *   ✅ Sử dụng tiền tố `dark:` của Tailwind CSS cho các style áp dụng trong dark mode.
+    *   ✅ Đảm bảo độ tương phản (contrast) tốt ở cả light và dark mode theo tiêu chuẩn WCAG.
+    *   ✅ Component `ThemeProvider` (trong `src/app/providers/`) chịu trách nhiệm chuyển đổi theme.
+
+---
+### Automated Code Style:
+```javascript
+// ✅ REQUIRED: .eslintrc.cjs
+module.exports = {
+plugins: ['import'],
+rules: {
+  'import/order': [
+    'error',
+    {
+      groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+      pathGroups: [
+        {
+          pattern: 'react',
+          group: 'external',
+          position: 'before',
+        },
+        {
+          pattern: '{app,shared,public,admin}/**',
+          group: 'internal',
+        },
+      ],
+      pathGroupsExcludedImportTypes: ['react'],
+      'newlines-between': 'always',
+      alphabetize: {
+        order: 'asc',
+        caseInsensitive: true,
+      },
+    },
+  ],
+},
+};
+```
+
+### Tailwind Class Ordering:
+- ✅ Install `prettier-plugin-tailwindcss`
+- ✅ Classes auto-sorted: layout → spacing → typography → background → border → effects
+
+## 🔐 SECURITY PATTERNS
+
+### Authentication Flow:
+```typescript
+// ✅ REQUIRED: Protected route implementation
+export function ProtectedRoute({ 
+children, 
+requirePermission 
+}: { 
+children: ReactNode; 
+requirePermission?: string;
+}) {
+const { user } = useAuthStore();
+
+if (!user) {
+  return <Navigate to="/login" replace />;
+}
+
+if (requirePermission && !user.permissions?.includes(requirePermission)) {
+  return <Navigate to="/unauthorized" replace />;
+}
+
+return <>{children}</>;
+}
+```
+
+## 📊 MONITORING & LOGGING
+
+### Error Tracking:
+```typescript
+// ✅ RECOMMENDED: Sentry integration
+import * as Sentry from '@sentry/react';
+
+Sentry.init({
+dsn: import.meta.env.VITE_SENTRY_DSN,
+environment: import.meta.env.MODE,
+integrations: [
+  new Sentry.BrowserTracing(),
+  new Sentry.Replay(),
+],
+});
+```
+## 📊 DATA TABLES (TanStack Table)
+
+*   **Vị trí:**
+    *   ✅ **BẮT BUỘC:** Component `DataTable` tái sử dụng và các thành phần liên quan (types, helpers) phải được đặt trong `src/shared/components/data-table/`.
+*   **Sử dụng:**
+    *   ✅ **BẮT BUỘC:** Sử dụng component `DataTable` từ `shared/components/data-table/` cho tất cả các bảng dữ liệu trong ứng dụng để đảm bảo tính nhất quán.
+    *   ✅ **BẮT BUỘC:** Định nghĩa `ColumnDef<T>` trong file riêng của feature (ví dụ: `[feature]/components/FeatureTableColumns.tsx`) hoặc trực tiếp tại nơi sử dụng `DataTable`.
+    *   ✅ **KHUYẾN KHÍCH:** Sử dụng các hàm helper (như `createActionColumn`, `createTableColumns`, `usePagination` từ `data-table-helpers.tsx`) để tạo cột action và cấu hình pagination một cách nhất quán.
+*   **State Management cho Bảng:**
+    *   **Sorting & Filtering:**
+        *   **Client-side:** Cho các bảng nhỏ hoặc không yêu cầu server-side processing, có thể sử dụng state nội bộ của `useReactTable` (như trong ví dụ `data-table.tsx` của bạn với `globalFilter` và `sorting`).
+        *   **Server-side:** Khi cần thiết (dữ liệu lớn, yêu cầu hiệu năng), state sorting và filtering phải được quản lý bên ngoài `DataTable` (thường là trong hook React Query của feature). Truyền các giá trị state này và các hàm callback để cập nhật chúng vào `DataTable` thông qua props (cần mở rộng `DataTableProps` nếu cần). `DataTable` chỉ hiển thị UI và trigger callback.
+    *   **Pagination:**
+        *   **Client-side:** Nếu toàn bộ dữ liệu đã được tải về client, có thể dùng `getPaginationRowModel` và state nội bộ.
+        *   **Server-side:** **BẮT BUỘC** cho hầu hết các trường hợp. Quản lý state pagination (trang hiện tại, kích thước trang, tổng số bản ghi) bên ngoài `DataTable` (thường trong hook React Query, lấy từ API response). Truyền state và callback `onPageChange` vào prop `pagination` của `DataTable` (như bạn đã làm).
+*   **Actions:**
+    *   ✅ Sử dụng hàm `createActionColumn` hoặc helper `createTableColumns` để tạo cột hành động (View, Edit, Delete, Custom) một cách thống nhất.
+    *   ✅ Logic xử lý action (ví dụ: gọi API delete, điều hướng đến trang edit) phải nằm trong các hàm `onClick` được truyền vào từ feature component, không nằm trong `DataTable`.
+*   **Styling:**
+    *   ✅ Sử dụng Tailwind CSS và các component từ `shared/components/ui/` (hoặc shadcn/ui trực tiếp nếu không cần tùy chỉnh nhiều) để style `DataTable`.
+    *   ✅ **BẮT BUỘC:** Đảm bảo `DataTable` và các thành phần con (header, cell, pagination, actions) hiển thị đúng và đẹp mắt ở cả **Light Mode** và **Dark Mode**.
+*   **Tái sử dụng và Tùy chỉnh:**
+    *   Component `DataTable` nên được thiết kế để có thể tái sử dụng tối đa thông qua props (`columns`, `data`, `pagination`, `loading`, `emptyState`, `searchable`, etc.).
+    *   Tránh thêm logic đặc thù của feature vào component `DataTable` chung. Nếu cần tùy chỉnh phức tạp cho một feature cụ thể, hãy xem xét tạo một component wrapper riêng cho feature đó.
+
+---
+## 🚫 STRICTLY PROHIBITED
+
+### Anti-patterns to Avoid:
+- ❌ Components outside defined folder structure
+- ❌ Direct imports between features (must use shared/)
+- ❌ Business logic in components (use hooks/services)
+- ❌ Hardcoded URLs, keys, or configuration
+- ❌ Direct API calls in components
+- ❌ Missing error boundaries on pages
+- ❌ Untyped API responses
+- ❌ Manual CSS in public pages
+- ❌ Features without dedicated routers
+- ❌ Missing test files for shared components
+- ❌ Synchronous route imports (must lazy load)
+- ❌ State mutations outside actions
+- ❌ Console.log in production code
+
+## ✅ DEVELOPMENT WORKFLOW
+
+### Pre-commit Checklist:
+1. ✅ All imports follow ordering rules
+2. ✅ TypeScript errors resolved
+3. ✅ Tests passing with coverage
+4. ✅ No hardcoded values
+5. ✅ Error boundaries in place
+6. ✅ Lazy loading implemented
+7. ✅ API calls use centralized client
+8. ✅ Zustand stores for UI state only
+9. ✅ React Query for server state
+10. ✅ Environment variables typed
+
+### Code Review Focus:
+- Performance: Check for unnecessary re-renders
+- Security: Validate auth flows and data exposure
+- Accessibility: ARIA labels and keyboard navigation
+- Error Handling: Graceful degradation
+- Type Safety: No `any` types without justification

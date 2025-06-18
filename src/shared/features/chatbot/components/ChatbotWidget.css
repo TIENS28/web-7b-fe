@@ -1,0 +1,72 @@
+/* Chatbot Widget Styles */
+.chatbot-widget {
+  position: fixed;
+  z-index: 1000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  pointer-events: auto !important;
+}
+
+.chatbot-bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.chatbot-bottom-left {
+  bottom: 20px;
+  left: 20px;
+}
+
+.chatbot-top-right {
+  top: 20px;
+  right: 20px;
+}
+
+.chatbot-top-left {
+  top: 20px;
+  left: 20px;
+}
+
+/* Message Icon */
+.message-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  color: white;
+  pointer-events: auto !important;
+}
+
+.message-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.message-icon.hidden {
+  display: none;
+}
+
+/* Dark Theme */
+.chatbot-dark .message-icon {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chatbot-widget {
+    bottom: 10px !important;
+    right: 10px !important;
+    left: auto !important;
+    top: auto !important;
+  }
+  
+  .message-icon {
+    width: 50px;
+    height: 50px;
+  }
+} 

@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Vite: Launch Edge",
+      "type": "msedge", // Sử dụng trình gỡ lỗi tích hợp cho Edge
+      "request": "launch",
+      "url": "http://localhost:5173", // URL mà Vite dev server chạy. Mặc định là 5173.
+                                     // Kiểm tra vite.config.ts nếu bạn đã thay đổi port.
+      "webRoot": "${workspaceFolder}",    // Thư mục gốc của project trên web server.
+                                        // Thường là ${workspaceFolder} cho Vite.
+                                        // Hoặc "${workspaceFolder}/src" nếu mã nguồn chính của bạn nằm trong /src
+                                        // và bạn muốn ánh xạ source map chính xác hơn.
+      "sourceMaps": true,               // Đảm bảo source maps được sử dụng
+      "preLaunchTask": "npm: dev",      // Chạy 'npm run dev' (script 'dev' trong package.json) trước khi launch
+      "postDebugTask": "Terminate All Tasks" // (Tùy chọn) Tắt tất cả các task (bao gồm cả Vite dev server) khi dừng debug.
+    },
+    {
+      "name": "Vite: Launch Chrome",
+      "type": "chrome", // Sử dụng trình gỡ lỗi tích hợp cho Chrome
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "preLaunchTask": "npm: dev",
+      "postDebugTask": "Terminate All Tasks"
+    }
+    // Bạn cũng có thể thêm cấu hình "attach" nếu muốn tự chạy 'npm run dev'
+    // và sau đó mới attach debugger, nhưng "launch" thường tiện hơn.
+  ]
+}

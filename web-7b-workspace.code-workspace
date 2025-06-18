@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "name": "web-7b-fe",
+      "path": "."
+    },
+    {
+      "name": "chatbot-frontend",
+      "path": "D:\\Chatbot-web-7b\\chatbot-fontend"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "ms-vscode.vscode-typescript-next"
+    ]
+  }
+} 

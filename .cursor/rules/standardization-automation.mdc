@@ -1,0 +1,187 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 🤖 CODEBASE STANDARDIZATION AUTOMATION
+
+## 📋 CHECKLIST FOR STANDARDIZATION
+
+### 1. ✅ EXPORT PATTERNS AUDIT
+- [ ] Every feature has `index.ts` with proper exports
+- [ ] Export pattern follows: Pages → Components → Hooks → Services → Types → Router
+- [ ] All exports use consistent naming conventions
+
+### 2. ✅ ERROR BOUNDARY IMPLEMENTATION
+- [ ] All page components wrapped in ErrorBoundary
+- [ ] All feature routers have ErrorBoundary wrapper
+- [ ] Standard ErrorFallback component implementation
+
+### 3. ✅ API HOOKS STANDARDIZATION
+- [ ] All API calls wrapped in React Query hooks
+- [ ] Proper error handling with `throwOnError: true`
+- [ ] Consistent retry logic for 4xx vs 5xx errors
+- [ ] Toast notifications for mutations
+
+### 4. ✅ FORM PATTERNS CONSISTENCY
+- [ ] React Hook Form + Zod validation
+- [ ] Proper error display with Alert components
+- [ ] Loading states on submit buttons
+- [ ] Consistent form field structure
+
+## 🔧 AUTOMATED FIXES NEEDED
+
+### Fix 1: Add ErrorBoundary to Routers
+```tsx
+// CURRENT (BAD):
+const UserRoutes: React.FC = () => {
+  return (
+    <Routes>
+      {/* routes */}
+    </Routes>
+  );
+};
+
+// FIXED (GOOD):
+import { ErrorBoundary } from 'shared/components';
+
+const UserRoutes: React.FC = () => {
+  return (
+    <ErrorBoundary fallback={ErrorFallback}>
+      <Routes>
+        {/* routes */}
+      </Routes>
+    </ErrorBoundary>
+  );
+};
+```
+
+### Fix 2: Standardize Export Order
+```typescript
+// CURRENT (INCONSISTENT):
+export { default as UserRoutes } from './router';
+export type { User } from './types/userTypes';
+export { useUsers } from './hooks/useUsers';
+
+// FIXED (STANDARDIZED):
+// ✅ Pages first
+export { UserListPage, UserDetailPage, UserCreatePage } from './pages';
+
+// ✅ Components second  
+export { UserTable, UserForm, UserCard } from './components';
+
+// ✅ Hooks third
+export { useUsers, useUser, useCreateUser } from './hooks';
+
+// ✅ Services fourth
+export { userApi } from './services';
+
+// ✅ Types fifth
+export type { User, UserFormData, UserFilters } from './types';
+
+// ✅ Router last
+export { default as UserRouter } from './router';
+```
+
+### Fix 3: Enhance API Hooks with Standard Patterns
+```typescript
+// CURRENT (BASIC):
+export const useUsers = () => {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: userApi.getAll
+  });
+};
+
+// FIXED (ENHANCED):
+export const useUsers = (params?: UserParams) => {
+  return useQuery({
+    queryKey: ['users', params],
+    queryFn: () => userApi.getAll(params),
+    throwOnError: true, // Let ErrorBoundary catch
+    retry: (failureCount, error) => {
+      // Don't retry on 4xx errors
+      if (error.response?.status >= 400 && error.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    meta: { errorMessage: 'Không thể tải danh sách người dùng' }
+  });
+};
+```
+
+## 🎯 PRIORITY FEATURES TO STANDARDIZE
+
+### High Priority:
+1. **Users Feature** (`src/admin/features/users/`)
+2. **Articles Feature** (`src/admin/features/articles/`)
+3. **Roles Feature** (`src/admin/features/roles/`)
+4. **Permissions Feature** (`src/admin/features/permissions/`)
+
+### Medium Priority:
+1. **Home Feature** (`src/public/features/home/`)
+2. **Services Feature** (`src/public/features/services/`)
+
+## 📝 SPECIFIC FIXES REQUIRED
+
+### For `src/admin/features/users/router.tsx`:
+```tsx
+// ADD: ErrorBoundary import and wrapper
+import { ErrorBoundary } from 'shared/components';
+
+// WRAP: Routes in ErrorBoundary
+<ErrorBoundary fallback={ErrorFallback}>
+  <Routes>
+    {/* existing routes */}
+  </Routes>
+</ErrorBoundary>
+```
+
+### For `src/admin/features/users/index.ts`:
+```typescript
+// REORDER: Exports according to standard pattern
+// 1. Pages first
+export { UserListPage } from './pages';
+
+// 2. Components (when added)
+// export { UserTable, UserForm } from './components';
+
+// 3. Hooks
+export { useUsers, useUser, useUpdateUser, useDeleteUser } from './hooks';
+
+// 4. Services  
+export { userApi } from './services';
+
+// 5. Types
+export type { User, UserRole, Permission } from './types';
+
+// 6. Router last
+export { default as UserRouter } from './router';
+```
+
+### Missing Components to Create:
+1. **ErrorFallback Component** (`src/shared/components/ErrorFallback.tsx`)
+2. **LoadingSpinner Component** (`src/shared/components/ui/LoadingSpinner.tsx`)
+3. **Standard Form Components** in each feature
+
+## 🚀 NEXT STEPS
+
+1. **Create Missing Shared Components**
+2. **Fix Export Patterns** in all features
+3. **Add ErrorBoundary** to all routers and pages
+4. **Enhance API Hooks** with standard patterns
+5. **Create Missing Page Components** with standard templates
+6. **Standardize Form Components** across features
+
+## 📊 COMPLETION METRICS
+
+### Success Criteria:
+- [ ] 100% features have proper export patterns
+- [ ] 100% routers have ErrorBoundary
+- [ ] 100% pages have ErrorBoundary
+- [ ] 100% API hooks follow standard patterns
+- [ ] 100% forms use standard patterns
+- [ ] 0 direct imports between features
+- [ ] 0 components outside defined structure
+

@@ -1,0 +1,36 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "./src", // hoặc "." nếu các alias tương đối với thư mục gốc của tsconfig
+    "paths": {
+      "/*": ["./*"], // Ví dụ: @/components sẽ trỏ đến src/components
+      "assets/*": ["./assets/*"],
+      "utils/*": ["./utils/*"],
+      "locales/*": ["./locales/*"],
+      "shared/*": ["./shared/*"],
+      "admin/*": ["./admin/*"],
+      "public/*": ["./public/*"],
+      "app/*": ["./app/*"]
+    }
+  },
+  "include": ["src"],
+}
